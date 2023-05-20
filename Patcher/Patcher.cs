@@ -64,11 +64,8 @@ namespace Tobey.Subnautica.ConfigHandler
             }
 
             ConfigFile bepinexConfig = typeof(ConfigFile)
-                .GetProperty("CoreConfig", BindingFlags.Static | BindingFlags.NonPublic)?.GetValue(null) switch
-            {
-                ConfigFile coreConfig => coreConfig,
-                _ => null
-            };
+                .GetProperty("CoreConfig", BindingFlags.Static | BindingFlags.NonPublic)?
+                .GetValue(null) as ConfigFile;
 
             const string ENTRYPOINT_CONFIG_SECTION = "Preloader.Entrypoint";
 
