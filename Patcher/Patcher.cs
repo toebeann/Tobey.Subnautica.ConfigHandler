@@ -23,7 +23,6 @@ namespace Tobey.Subnautica.ConfigHandler
         public static void Patch(AssemblyDefinition _) { }
         #endregion
 
-        //private static readonly string bepConfigPath = Path.Combine(Paths.ConfigPath, "BepInEx.cfg");
         private static readonly ManualLogSource logger = Logger.CreateLogSource("Legacy Config Handler");
 
         private static RunningGame RunningGame => Paths.ProcessName switch
