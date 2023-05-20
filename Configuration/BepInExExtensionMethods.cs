@@ -4,11 +4,7 @@ namespace Tobey.Subnautica.ConfigHandler.Configuration;
 internal static class BepInExExtensionMethods
 {
     public static ConfigEntry<T> GetConfigEntry<T>(this ConfigFile configFile, string section, string key)
-        => configFile?[section, key] switch
-        {
-            ConfigEntry<T> entry => entry,
-            _ => null
-        };
+        => configFile?[section, key] as ConfigEntry<T>;
 
     public static ConfigEntry<T> Bind<T>(this ConfigFile configFile, Definition<T> args) => configFile.Bind(
         section: args.Section,
