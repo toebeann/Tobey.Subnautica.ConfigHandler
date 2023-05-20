@@ -145,8 +145,8 @@ namespace Tobey.Subnautica.ConfigHandler
                     return types.Any(type =>
                         type.CustomAttributes.Any(attribute =>
                             attribute.AttributeType.FullName == typeof(BepInPlugin).FullName &&
-                            attribute.ConstructorArguments.FirstOrDefault().Value is string &&
-                            attribute.ConstructorArguments.FirstOrDefault().Value as string == "QModManager.QMMLoader"));
+                            attribute.ConstructorArguments.FirstOrDefault().Value is string pluginGuid &&
+                            pluginGuid == "QModManager.QMMLoader"));
                 }
                 catch
                 {
