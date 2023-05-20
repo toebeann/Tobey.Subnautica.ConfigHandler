@@ -149,7 +149,7 @@ namespace Tobey.Subnautica.ConfigHandler
                             pluginGuid == "QModManager.QMMLoader"));
                 }
                 catch
-                {
+                {   // if we fail to parse an assembly, it's probably not gonna be QMM...
                     return false;
                 }
             });
@@ -164,15 +164,26 @@ namespace Tobey.Subnautica.ConfigHandler
                     {
                         return
                             File.Exists(path) &&
-                            (JsonConvert.DeserializeObject<JToken>(File.ReadAllText(path)) as JObject)
-                            .TryGetValue("Enable", out var key) switch
-                            {
-                                true when key.Type == JTokenType.Boolean => key.Value<bool>(),
-                                _ => false,
-                            };
+                            (JsonConvert.DeserializeObject<JToken>(File.ReadAllText(path)) as JObject).TryGetValue("Enable", out var key) &&
+                            key.Type == JTokenType.Boolean &&
+                            key.Value<bool>();
+                    }
+                    catch (FileNotFoundException e)
+                    when (e.FileName == path)
+                    {   // seems the mod.json disappeared somehow, just ignore it as if there's no mod.json then qmm won't load it
+                        return false;
+                    }
+                    catch (FileNotFoundException)
+                    {   // when e.FileName != path this is usually an error about a needed assembly not being found by the runtime.
+                        // most likely cause of this is user is on SN1 legacy branch without corlibs package,
+                        // i.e. System.Runtime.Serialization assembly is missing, which our embedded copy of Json.NET depends upon.
+                        // so, this means we can't parse JSON without some other means, and it's not worth it to keep trying,
+                        // so let's short-circuit the iterator by returning true, skipping the check for enabled QMods
+                        return true;
                     }
                     catch
-                    {   // if we fail to parse the mod.json, we'll just assume it's not an enabled qmod
+                    {   // if we fail to parse the mod.json for any other reason, we'll just assume it's not an enabled qmod
+                        // e.g. because it's not valid JSON
                         return false;
                     }
                 });
