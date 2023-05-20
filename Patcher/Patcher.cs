@@ -68,10 +68,9 @@ namespace Tobey.Subnautica.ConfigHandler
                 .GetValue(null) as ConfigFile;
 
             const string ENTRYPOINT_CONFIG_SECTION = "Preloader.Entrypoint";
-
-            var entryPointAssembly = bepinexConfig?.GetConfigEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Assembly");
-            var entryPointType = bepinexConfig?.GetConfigEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Type");
-            var entryPointMethod = bepinexConfig?.GetConfigEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Method");
+            var entryPointAssembly = bepinexConfig?.GetEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Assembly");
+            var entryPointType = bepinexConfig?.GetEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Type");
+            var entryPointMethod = bepinexConfig?.GetEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Method");
 
             if (new[] { entryPointAssembly, entryPointMethod, entryPointType }.Contains(null))
             {
@@ -106,6 +105,11 @@ namespace Tobey.Subnautica.ConfigHandler
                     break;
             }
         }
+
+        public static ConfigEntry<T> GetEntry<T>(this ConfigFile configFile, string section, string key)
+            => configFile?[section, key] as ConfigEntry<T>;
+
+        public static void ApplyDefaultValue<T>(this ConfigEntry<T> configEntry) => configEntry.Value = (T)configEntry.DefaultValue;
 
         private static SteamBetaBranch GetSteamBetaBranch()
         {
