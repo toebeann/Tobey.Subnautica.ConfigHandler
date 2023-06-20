@@ -136,30 +136,46 @@ namespace Tobey.Subnautica.ConfigHandler
             }
         }
 
-        private static bool HasQModManager() =>
-            Directory.GetFiles(Paths.PluginPath, "QModInstaller.dll", SearchOption.AllDirectories).Any(path =>
+        private static bool HasQModManager()
+        {
+            try
             {
-                try
-                {
-                    using var assembly = AssemblyDefinition.ReadAssembly(path);
-                    var types = assembly.Modules.SelectMany(module => module.GetAllTypes());
-                    return types.Any(type =>
-                        type.CustomAttributes.Any(attribute =>
-                            attribute.AttributeType.FullName == typeof(BepInPlugin).FullName &&
-                            attribute.ConstructorArguments.FirstOrDefault().Value is string pluginGuid &&
-                            pluginGuid == "QModManager.QMMLoader"));
-                }
-                catch
-                {   // if we fail to parse an assembly, it's probably not gonna be QMM...
-                    return false;
-                }
-            });
+                return
+                    Directory.GetFiles(Paths.PluginPath, "QModInstaller.dll", SearchOption.AllDirectories)
+                    .Any(path =>
+                    {
+                        try
+                        {
+                            using var assembly = AssemblyDefinition.ReadAssembly(path);
+                            var types = assembly.Modules.SelectMany(module => module.GetAllTypes());
+                            return types.Any(type =>
+                                type.CustomAttributes.Any(attribute =>
+                                    attribute.AttributeType.FullName == typeof(BepInPlugin).FullName &&
+                                    attribute.ConstructorArguments.FirstOrDefault().Value is string pluginGuid &&
+                                    pluginGuid == "QModManager.QMMLoader"));
+                        }
+                        catch
+                        {   // if we fail to parse an assembly, it's probably not gonna be QMM...
+                            return false;
+                        }
+                    });
+            }
+            catch
+            {   // if we got here it probably means that Paths.PluginPath does not refer to a directory which exists
+                // i.e. QMM definitely isn't installed...
+                return false;
+            }
+        }
 
-        private static bool HasEnabledQModManagerMods() =>
-            HasQModManager() &&
-            Directory.GetDirectories(Path.Combine(Paths.GameRootPath, "QMods"))
-                .Select(dir => Path.Combine(dir, "mod.json"))
-                .Any(path =>
+        private static bool HasEnabledQModManagerMods()
+        {
+            try
+            {
+                return
+                    HasQModManager() &&
+                    Directory.GetDirectories(Path.Combine(Paths.GameRootPath, "QMods"))
+                    .Select(dir => Path.Combine(dir, "mod.json"))
+                    .Any(path =>
                 {
                     try
                     {
@@ -188,5 +204,11 @@ namespace Tobey.Subnautica.ConfigHandler
                         return false;
                     }
                 });
+            }
+            catch
+            {   // if we got here it probably means that the QMods folder does not exist, i.e. QMods are def. not installed
+                return false;
+            }
+        }
     }
 }
