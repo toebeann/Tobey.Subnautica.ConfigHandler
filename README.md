@@ -6,7 +6,7 @@ Includes a BepInEx plugin for in-game configuration with [Configuration Manager]
 
 ## Usage
 
-Generally speaking you shouldn't need to do much beyond plopping the contents of the downloaded .zip from the releases page into your game folder (after installing BepInEx, of course).
+Generally speaking you shouldn't need to do much beyond plopping the contents of the downloaded .zip from [the releases page](https://github.com/toebeann/Tobey.Subnautica.ConfigHandler/releases) into your game folder (after installing BepInEx, of course).
 
 However, if configuration is required, there are several configuration options, which can be edited in-game with [Configuration Manager](https://github.com/toebeann/BepInEx.ConfigurationManager.Subnautica) (requires enabling "Advanced settings"), or by editing the `Tobey.Subnautica.ConfigHandler.cfg` file generated in `BepInEx\config`:
 
