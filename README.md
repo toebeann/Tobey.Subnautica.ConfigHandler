@@ -1,6 +1,6 @@
 # Tobey's Subnautica Config Handler
 
-A BepInEx patcher for Subnautica and Subnautica: Below Zero to automatically handle common BepInEx configuration entries - particularly useful for transitioning to and from the legacy branch to use QModManager.
+A BepInEx patcher for Subnautica and Subnautica: Below Zero to automatically handle common BepInEx configuration entries - particularly useful when using BepInEx with QModManager.
 
 Includes a BepInEx plugin for in-game configuraiton with [Configuration Manager](https://github.com/toebeann/BepInEx.ConfigurationManager.Subnautica) (requires enabling "Advanced settings").
 
