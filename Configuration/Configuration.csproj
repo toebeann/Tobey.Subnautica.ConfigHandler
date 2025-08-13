@@ -46,8 +46,9 @@
     <Compile Include="Definition.cs" />
     <Compile Include="ConfigurationManagerAttributes.cs" />
     <Compile Include="BepInExExtensionMethods.cs" />
+    <Compile Include="HideManagerGameObjectOverrideMode.cs" />
     <Compile Include="SteamBetaBranchFilters.cs" />
-    <Compile Include="OverrideMode.cs" />
+    <Compile Include="EntryPointOverrideMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

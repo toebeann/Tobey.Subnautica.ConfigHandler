@@ -4,7 +4,7 @@
     <TargetFramework>net472</TargetFramework>
     <AssemblyName>Tobey.Subnautica.ConfigHandler.Plugin</AssemblyName>
     <Description>Config handler for Subnautica and Subnautica: Below Zero</Description>
-    <Version>1.0.2</Version>
+    <Version>1.1.0</Version>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>latest</LangVersion>
     <Product>Subnautica Config Handler</Product>

@@ -1,6 +1,6 @@
 # Tobey's Subnautica Config Handler
 
-A BepInEx patcher for Subnautica and Subnautica: Below Zero to automatically handle common BepInEx configuration entries - particularly useful when using BepInEx with QModManager.
+A BepInEx patcher for Subnautica and Subnautica: Below Zero to automatically handle configuration of important BepInEx config entries, setting them as needed depending on the user's Steam beta branch.
 
 Includes a BepInEx plugin for in-game configuration with [Configuration Manager](https://github.com/toebeann/BepInEx.ConfigurationManager.Subnautica) (requires enabling "Advanced settings").
 
@@ -11,7 +11,7 @@ Generally speaking, you shouldn't need to do much beyond plopping the contents o
 However, if manual configuration is desired, there are several configuration options which can be edited in-game with [Configuration Manager](https://github.com/toebeann/BepInEx.ConfigurationManager.Subnautica) (requires enabling "Advanced settings"), or by editing the `Tobey.Subnautica.ConfigHandler.cfg` file generated in `BepInEx\config`:
 
 ```
-## Settings file was created by plugin Subnautica Config Handler v1.0.2
+## Settings file was created by plugin Subnautica Config Handler v1.1.0
 ## Plugin GUID: Tobey.Subnautica.ConfigHandler
 
 [General]
@@ -21,26 +21,45 @@ However, if manual configuration is desired, there are several configuration opt
 # Default value: true
 Enabled = true
 
-## A value other than Automatic will cause the specified configuration override to always be applied.
-# Setting type: OverrideMode
-# Default value: Automatic
-# Acceptable values: Automatic, Default, QModManager
-Configuration override mode = Automatic
+## Whether to ignore the unsupported game warning and apply configuration overrides anyway.
+# Setting type: Boolean
+# Default value: false
+Ignore unsupported game warning = false
 
-## Which Steam beta branches should trigger the QModManager configuration to be applied in Automatic mode.
+[Override: Entry point]
+
+## A value other than Filtered will cause the specified override to always be applied.
+## To disable the override, set to Filtered and set the branch filter to Disabled (uncheck all in Configuration Manager).
+# Setting type: EntryPointOverrideMode
+# Default value: Filtered
+# Acceptable values: Filtered, Default, QModManager
+Mode = Filtered
+
+## Which Steam beta branches should trigger the QModManager entry point to be applied in Automatic mode.
 # Setting type: SteamBetaBranchFilters
-# Default value: Legacy
-# Acceptable values: None, Legacy, Experimental, Any
+# Default value: legacy
+# Acceptable values: Disabled, None, legacy, experimental, march_2023, Any
 # Multiple values can be set at the same time by separating them with , (e.g. Debug, Warning)
-Steam beta branch filters = Legacy
+Branch filter = legacy
 
-## Whether to ignore the presence of QModManager and QMods when determining which configuration to apply in Automatic mode.
+## Whether to ignore the presence of QModManager and QMods when determining whether to apply the QModManager entry point in Automatic mode.
 # Setting type: Boolean
 # Default value: false
 Ignore QModManager = false
 
-## Whether to ignore the unsupported game warning and apply the configuration override anyway.
-# Setting type: Boolean
-# Default value: false
-Ignore unsupported game warning = false
+[Override: HideManagerGameObject]
+
+## A value other than Filtered will cause the specified override to always be applied.
+## To disable the override, set to Filtered and set the branch filter to Disabled (uncheck all in Configuration Manager).
+# Setting type: HideManagerGameObjectOverrideMode
+# Default value: Filtered
+# Acceptable values: Filtered, True, False
+Mode = Filtered
+
+## Which Steam beta branches should trigger the HideManagerGameObject configuration to be applied in Automatic mode.
+# Setting type: SteamBetaBranchFilters
+# Default value: None, experimental
+# Acceptable values: Disabled, None, legacy, experimental, march_2023, Any
+# Multiple values can be set at the same time by separating them with , (e.g. Debug, Warning)
+Branch filter = None, experimental
 ```

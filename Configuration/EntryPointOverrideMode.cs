@@ -1,8 +1,8 @@
 ﻿namespace Tobey.Subnautica.ConfigHandler.Configuration;
 
-internal enum OverrideMode
+internal enum EntryPointOverrideMode
 {
-    Automatic,
+    Filtered,
     Default,
     QModManager,
 }

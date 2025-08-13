@@ -10,9 +10,11 @@ public class Plugin : BaseUnityPlugin
     private void Awake()
     {
         Config.Bind(Definitions.Enabled);
-        Config.Bind(Definitions.OverrideMode);
-        Config.Bind(Definitions.SteamBetaBranchFilters);
-        Config.Bind(Definitions.IgnoreQModManager);
         Config.Bind(Definitions.IgnoreUnsupportedGameWarning);
+        Config.Bind(Definitions.EntryPointOverrideMode);
+        Config.Bind(Definitions.QModManagerEntryPointBranchFilter);
+        Config.Bind(Definitions.IgnoreQModManager);
+        Config.Bind(Definitions.HideManagerGameObjectOverrideMode);
+        Config.Bind(Definitions.HideManagerGameObjectBranchFilter);
     }
 }

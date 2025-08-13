@@ -6,10 +6,12 @@ using Mono.Cecil;
 using Mono.Cecil.Rocks;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Tobey.Subnautica.ConfigHandler.Configuration;
 
 namespace Tobey.Subnautica.ConfigHandler
@@ -23,7 +25,7 @@ namespace Tobey.Subnautica.ConfigHandler
         public static void Patch(AssemblyDefinition _) { }
         #endregion
 
-        private static readonly ManualLogSource logger = Logger.CreateLogSource("Legacy Config Handler");
+        private static readonly ManualLogSource logger = Logger.CreateLogSource("Branch Config Handler");
 
         private static RunningGame RunningGame => Paths.ProcessName switch
         {
@@ -72,37 +74,96 @@ namespace Tobey.Subnautica.ConfigHandler
             var entryPointType = bepinexConfig?.GetEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Type");
             var entryPointMethod = bepinexConfig?.GetEntry<string>(ENTRYPOINT_CONFIG_SECTION, "Method");
 
-            if (new[] { entryPointAssembly, entryPointMethod, entryPointType }.Contains(null))
+            if (new dynamic[] { entryPointAssembly, entryPointMethod, entryPointType }.Contains(null))
             {
                 logger.LogWarning("Failed to parse BepInEx config! Aborting patch.");
                 return;
             }
 
-            var overrideMode = config.Bind(Definitions.OverrideMode).Value switch
+            var branch = GetSteamBetaBranch();
+            logger.LogInfo($"Detected branch: {branch switch
             {
-                OverrideMode.Automatic when
-                    config.Bind(Definitions.SteamBetaBranchFilters).Value.HasFlag(GetSteamBetaBranch().AsFilter()) &&
+                SteamBetaBranch.None when !File.Exists(manifestPath) => "Non-Steam install, treating as None",
+                _ => branch
+            }}");
+
+            // determine entry point override mode
+            var qmodManagerEntryPointBranchFilter = config.Bind(Definitions.QModManagerEntryPointBranchFilter);
+
+            var entryPointOverrideMode = config.Bind(Definitions.EntryPointOverrideMode).Value switch
+            {
+                EntryPointOverrideMode.Filtered when
+                    qmodManagerEntryPointBranchFilter.Value.HasFlag(branch.AsFilter()) &&
                     (config.Bind(Definitions.IgnoreQModManager).Value || HasEnabledQModManagerMods())
-                    => OverrideMode.QModManager,
-                OverrideMode.Automatic => OverrideMode.Default,
-                OverrideMode mode => mode,
+                        => EntryPointOverrideMode.QModManager,
+
+                EntryPointOverrideMode.Filtered when
+                    qmodManagerEntryPointBranchFilter.Value != SteamBetaBranchFilters.Disabled
+                        => EntryPointOverrideMode.Default,
+
+                EntryPointOverrideMode mode => mode,
             };
 
-            logger.LogInfo($"Applying override mode: {overrideMode}");
-
-            switch (overrideMode)
+            // if still filtered then we're skipping the override
+            if (entryPointOverrideMode == EntryPointOverrideMode.Filtered)
             {
-                case OverrideMode.QModManager:
-                    entryPointAssembly.Value = "Assembly-CSharp.dll";
-                    entryPointType.Value = "SystemsSpawner";
-                    entryPointMethod.Value = "Awake";
-                    break;
+                logger.LogInfo("Entry point override disabled by branch filters");
+            }
+            else
+            {
+                logger.LogInfo($"Applying entry point override: {entryPointOverrideMode}");
 
-                default:
-                    entryPointAssembly.ApplyDefaultValue();
-                    entryPointType.ApplyDefaultValue();
-                    entryPointMethod.ApplyDefaultValue();
-                    break;
+                switch (entryPointOverrideMode)
+                {
+                    case EntryPointOverrideMode.QModManager:
+                        entryPointAssembly.Value = "Assembly-CSharp.dll";
+                        entryPointType.Value = "SystemsSpawner";
+                        entryPointMethod.Value = "Awake";
+                        break;
+
+                    case EntryPointOverrideMode.Default:
+                        entryPointAssembly.ApplyDefaultValue();
+                        entryPointType.ApplyDefaultValue();
+                        entryPointMethod.ApplyDefaultValue();
+                        break;
+                }
+            }
+
+            // determine chainloader override mode
+            var hideManagerGameObjectBranchFilter = config.Bind(Definitions.HideManagerGameObjectBranchFilter);
+
+            var chainloaderOverrideMode = config.Bind(Definitions.HideManagerGameObjectOverrideMode).Value switch
+            {
+                HideManagerGameObjectOverrideMode.Filtered when
+                    hideManagerGameObjectBranchFilter.Value.HasFlag(branch.AsFilter())
+                        => HideManagerGameObjectOverrideMode.True,
+
+                HideManagerGameObjectOverrideMode.Filtered when
+                    hideManagerGameObjectBranchFilter.Value != SteamBetaBranchFilters.Disabled
+                        => HideManagerGameObjectOverrideMode.False,
+
+                HideManagerGameObjectOverrideMode mode => mode,
+            };
+
+            // if still filtered then we're skipping
+            if (chainloaderOverrideMode == HideManagerGameObjectOverrideMode.Filtered)
+            {
+                logger.LogInfo("HideManagerGameObject override disabled by branch filters");
+            }
+            else
+            {
+                logger.LogInfo($"Applying HideManagerGameObject override: {chainloaderOverrideMode}");
+
+                switch (chainloaderOverrideMode)
+                {
+                    case HideManagerGameObjectOverrideMode.True:
+                        bepinexConfig.SetHideManagerGameObject(true);
+                        break;
+
+                    case HideManagerGameObjectOverrideMode.False:
+                        bepinexConfig.SetHideManagerGameObject(false);
+                        break;
+                }
             }
         }
 
@@ -111,11 +172,31 @@ namespace Tobey.Subnautica.ConfigHandler
 
         public static void ApplyDefaultValue<T>(this ConfigEntry<T> configEntry) => configEntry.Value = (T)configEntry.DefaultValue;
 
+        private static void SetHideManagerGameObject(this ConfigFile configFile, bool value)
+        {
+            const string SECTION = "Chainloader";
+            const string KEY = "HideManagerGameObject";
+
+            try
+            {
+                configFile.GetEntry<bool>(SECTION, KEY).Value = value;
+            }
+            catch
+            {
+                configFile.Bind(SECTION, KEY, false,
+                    description: new StringBuilder()
+                        .AppendLine("If enabled, hides BepInEx Manager GameObject from Unity.")
+                        .AppendLine("This can fix loading issues in some games that attempt to prevent BepInEx from being loaded.")
+                        .AppendLine("Use this only if you know what this option means, as it can affect functionality of some older plugins.")
+                        .ToString()).Value = value;
+            }
+        }
+
+        private static readonly string manifestPath = Path.GetFullPath(Path.Combine(Paths.GameRootPath, "../../", $"appmanifest_{SteamGameId}.acf"));
         private static SteamBetaBranch GetSteamBetaBranch()
         {
             try
             {
-                var manifestPath = Path.GetFullPath(Path.Combine(Paths.GameRootPath, "../../", $"appmanifest_{SteamGameId}.acf"));
                 return new VDFData(manifestPath)
                     .Nodes
                     .FindNode("AppState")
@@ -123,11 +204,12 @@ namespace Tobey.Subnautica.ConfigHandler
                     .FindNode("MountedConfig")
                     .Keys
                     .FindKey("BetaKey")?
-                    .Value switch
+                    .Value.ToLowerInvariant() switch
                 {
-                    "legacy" => SteamBetaBranch.Legacy,
-                    "experimental" => SteamBetaBranch.Experimental,
-                    _ => SteamBetaBranch.None, // an empty or missing value means not on a beta branch
+                    string betaKey => Enum.TryParse<SteamBetaBranch>(betaKey, out var branch)
+                        ? branch
+                        : SteamBetaBranch.None,
+                    _ => SteamBetaBranch.None,
                 };
             }
             catch
